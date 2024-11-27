@@ -7,10 +7,11 @@ from sklearn.model_selection import train_test_split
 from telegram import Bot
 from concurrent.futures import ThreadPoolExecutor
 import yfinance as yf
+import os  # Import pour accéder aux variables d'environnement
 
-# Initialisation des paramètres Telegram
-TELEGRAM_TOKEN = "7402831359:AAHwrtwwqOhxsP4iajcx9-zGXev_DGDMlPY"
-CHAT_ID = "1963161645"
+# Initialisation des paramètres Telegram à partir des variables d'environnement
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+CHAT_ID = os.getenv("CHAT_ID")
 bot = Bot(token=TELEGRAM_TOKEN)
 
 # Liste des cryptomonnaies à surveiller
@@ -37,15 +38,12 @@ def train_ml_model(data, target):
 
 # Fonction pour calculer les indicateurs techniques
 def calculate_indicators(prices):
-    # Calculer des indicateurs plus complets (SMA, EMA, RSI, MACD, Bollinger Bands, etc.)
-    # ...
-
-    # Exemple simple :
+    # Exemple simple : Calcul de moyennes mobiles (SMA)
     sma_short = prices[-10:].mean()
     sma_long = prices[-20:].mean()
-    # ... d'autres indicateurs
 
-    return sma_short, sma_long, ...
+    # Ajouter d'autres indicateurs techniques ici (comme RSI, MACD, etc.)
+    return sma_short, sma_long
 
 # Fonction pour analyser les signaux avec le modèle ML
 def analyze_signals(prices, model):
@@ -60,7 +58,8 @@ def analyze_signals(prices, model):
     buy_signal = prediction[0] == 1
 
     # Calculer stop-loss et take-profit dynamiques (basés sur des indicateurs techniques)
-    # ...
+    stop_loss = None  # Ajouter une logique de calcul de stop loss
+    take_profit = None  # Ajouter une logique de calcul de take profit
 
     return buy_signal, stop_loss, take_profit
 
@@ -69,7 +68,10 @@ def analyze_crypto(crypto, model):
     prices = fetch_crypto_data(crypto)
     if prices is not None:
         buy_signal, stop_loss, take_profit = analyze_signals(prices, model)
-        # ... (même logique que précédemment)
+        # Envoyer un message si un signal d'achat est généré
+        if buy_signal:
+            bot.send_message(chat_id=CHAT_ID, text=f"Buy signal detected for {crypto}!")
+        # Ajouter la logique d'envoi de notifications pour le stop-loss et take-profit
 
 # Fonction principale
 def main():
@@ -78,7 +80,7 @@ def main():
     # Créer des features (indicateurs techniques)
     features = calculate_indicators(data)
     # Créer des targets (signaux d'achat/vente basés sur une stratégie manuelle ou un autre modèle)
-    targets = ...
+    targets = np.random.randint(0, 2, len(features))  # Exemple aléatoire pour les targets
 
     # Entraîner le modèle
     model = train_ml_model(features, targets)
@@ -86,7 +88,7 @@ def main():
     while True:
         with ThreadPoolExecutor() as executor:
             executor.map(lambda crypto: analyze_crypto(crypto, model), CRYPTO_LIST)
-        time.sleep(300)
+        time.sleep(300)  # Attendre 5 minutes avant de répéter
 
 if __name__ == "__main__":
     main()
