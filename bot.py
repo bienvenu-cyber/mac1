@@ -7,9 +7,9 @@ from sklearn.model_selection import train_test_split
 from telegram import Bot
 from concurrent.futures import ThreadPoolExecutor
 import yfinance as yf
-import os  # Import pour accéder aux variables d'environnement
+import os
 
-# Initialisation des paramètres Telegram à partir des variables d'environnement
+# Initialisation des paramètres Telegram
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
 CHAT_ID = os.getenv("CHAT_ID")
 bot = Bot(token=TELEGRAM_TOKEN)
@@ -27,10 +27,14 @@ def fetch_crypto_data(crypto_id, period="1y"):
 
 # Fonction pour entraîner un modèle de machine learning (à améliorer)
 def train_ml_model(data, target):
+    # Si data est une liste ou un tableau 1D, on le reformate en 2D
+    if len(data.shape) == 1:
+        data = data.reshape(-1, 1)  # Reformater en un tableau 2D
+
     # Division des données en ensemble d'entraînement et de test
     X_train, X_test, y_train, y_test = train_test_split(data, target, test_size=0.2, random_state=42)
 
-    # Modèle de régression logistique (à remplacer par un modèle plus complexe si nécessaire)
+    # Modèle de régression logistique
     model = LogisticRegression()
     model.fit(X_train, y_train)
 
@@ -38,12 +42,13 @@ def train_ml_model(data, target):
 
 # Fonction pour calculer les indicateurs techniques
 def calculate_indicators(prices):
-    # Exemple simple : Calcul de moyennes mobiles (SMA)
+    # Calculer des indicateurs plus complets (SMA, EMA, RSI, MACD, Bollinger Bands, etc.)
+    # Exemple simple :
     sma_short = prices[-10:].mean()
     sma_long = prices[-20:].mean()
+    # ... d'autres indicateurs
 
-    # Ajouter d'autres indicateurs techniques ici (comme RSI, MACD, etc.)
-    return sma_short, sma_long
+    return sma_short, sma_long  # Retourner seulement les indicateurs simples pour cet exemple
 
 # Fonction pour analyser les signaux avec le modèle ML
 def analyze_signals(prices, model):
@@ -51,15 +56,16 @@ def analyze_signals(prices, model):
     indicators = calculate_indicators(prices)
 
     # Préparer les données pour le modèle
-    features = np.array(indicators).reshape(1, -1)
+    features = np.array(indicators).reshape(1, -1)  # Assurer que les features sont en 2D
     prediction = model.predict(features)
 
     # Signal basé sur le modèle ML
     buy_signal = prediction[0] == 1
 
     # Calculer stop-loss et take-profit dynamiques (basés sur des indicateurs techniques)
-    stop_loss = None  # Ajouter une logique de calcul de stop loss
-    take_profit = None  # Ajouter une logique de calcul de take profit
+    # Placeholder pour la logique du stop-loss et take-profit
+    stop_loss = 0  # A remplir selon la stratégie
+    take_profit = 0  # A remplir selon la stratégie
 
     return buy_signal, stop_loss, take_profit
 
@@ -68,27 +74,24 @@ def analyze_crypto(crypto, model):
     prices = fetch_crypto_data(crypto)
     if prices is not None:
         buy_signal, stop_loss, take_profit = analyze_signals(prices, model)
-        # Envoyer un message si un signal d'achat est généré
-        if buy_signal:
-            bot.send_message(chat_id=CHAT_ID, text=f"Buy signal detected for {crypto}!")
-        # Ajouter la logique d'envoi de notifications pour le stop-loss et take-profit
+        # Ici tu peux ajouter la logique pour envoyer les signaux via Telegram
 
 # Fonction principale
 def main():
-    # Charger des données historiques pour l'entraînement (à remplacer par vos propres données)
+    # Charger des données historiques pour l'entraînement
     data = fetch_crypto_data("BTC-USD", "5y")
     # Créer des features (indicateurs techniques)
     features = calculate_indicators(data)
     # Créer des targets (signaux d'achat/vente basés sur une stratégie manuelle ou un autre modèle)
-    targets = np.random.randint(0, 2, len(features))  # Exemple aléatoire pour les targets
+    targets = [1 if x > 0 else 0 for x in np.diff(data)]  # C'est un exemple simple pour les cibles
 
     # Entraîner le modèle
-    model = train_ml_model(features, targets)
+    model = train_ml_model(np.array(features).reshape(-1, 1), np.array(targets))
 
     while True:
         with ThreadPoolExecutor() as executor:
             executor.map(lambda crypto: analyze_crypto(crypto, model), CRYPTO_LIST)
-        time.sleep(300)  # Attendre 5 minutes avant de répéter
+        time.sleep(300)
 
 if __name__ == "__main__":
     main()
