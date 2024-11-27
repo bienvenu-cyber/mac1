@@ -81,7 +81,7 @@ def main():
     
     # Calculer les indicateurs (attention à la taille des features et targets)
     features = np.array([calculate_indicators(data[i-20:i]) for i in range(20, len(data))])
-    targets = np.array([1 if data[i] > data[i-1] else 0 for i in range(1, len(data))])
+    targets = np.array([1 if data[i] > data[i-1] else 0 for i in range(20, len(data))])  # Ajuster l'index
 
     # Vérifier la taille des features et targets
     print(f"Size of features: {features.shape}")
