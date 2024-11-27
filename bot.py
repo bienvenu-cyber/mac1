@@ -43,12 +43,10 @@ def train_ml_model(data, target):
 # Fonction pour calculer les indicateurs techniques
 def calculate_indicators(prices):
     # Calculer des indicateurs plus complets (SMA, EMA, RSI, MACD, Bollinger Bands, etc.)
-    # Exemple simple :
     sma_short = prices[-10:].mean()
     sma_long = prices[-20:].mean()
-    # ... d'autres indicateurs
-
-    return sma_short, sma_long  # Retourner seulement les indicateurs simples pour cet exemple
+    # Exemple de plus d'indicateurs ici (simplifié pour le moment)
+    return sma_short, sma_long
 
 # Fonction pour analyser les signaux avec le modèle ML
 def analyze_signals(prices, model):
@@ -78,15 +76,19 @@ def analyze_crypto(crypto, model):
 
 # Fonction principale
 def main():
-    # Charger des données historiques pour l'entraînement
+    # Récupérer les données historiques de la cryptomonnaie
     data = fetch_crypto_data("BTC-USD", "5y")
-    # Créer des features (indicateurs techniques)
-    features = calculate_indicators(data)
-    # Créer des targets (signaux d'achat/vente basés sur une stratégie manuelle ou un autre modèle)
-    targets = [1 if x > 0 else 0 for x in np.diff(data)]  # C'est un exemple simple pour les cibles
+    
+    # Calculer les indicateurs (attention à la taille des features et targets)
+    features = np.array([calculate_indicators(data[i-20:i]) for i in range(20, len(data))])
+    targets = np.array([1 if data[i] > data[i-1] else 0 for i in range(1, len(data))])
+
+    # Vérifier la taille des features et targets
+    print(f"Size of features: {features.shape}")
+    print(f"Size of targets: {targets.shape}")
 
     # Entraîner le modèle
-    model = train_ml_model(np.array(features).reshape(-1, 1), np.array(targets))
+    model = train_ml_model(features, targets)
 
     while True:
         with ThreadPoolExecutor() as executor:
